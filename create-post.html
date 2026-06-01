@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>إنشاء منشور | Ramz-X</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="common.js"></script>
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-card: #111111;
+            --bg-input: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --text-muted: #777777;
+            --accent: #ff0050;
+            --accent-blue: #3b82f6;
+            --border: #2c2c2c;
+            --radius: 1rem;
+        }
+        body.light {
+            --bg-primary: #f5f5f5;
+            --bg-card: #ffffff;
+            --bg-input: #e8e8e8;
+            --text-primary: #111111;
+            --text-secondary: #444444;
+            --text-muted: #666666;
+            --border: #e0e0e0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-primary);
+            font-family: 'Cairo', sans-serif;
+            min-height: 100vh;
+            padding-bottom: 70px;
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-primary);
+            border-bottom: 0.5px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .header h2 {
+            flex: 1;
+            font-size: 18px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Cairo', sans-serif;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--accent);
+        }
+        textarea {
+            min-height: 130px;
+            resize: vertical;
+        }
+
+        .image-upload-area {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            background: var(--bg-input);
+        }
+        .upload-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .upload-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 10px 18px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .upload-btn i {
+            font-size: 16px;
+        }
+        .image-preview {
+            width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 12px;
+            margin-top: 12px;
+            display: none;
+        }
+        .remove-image-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .actions-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .primary-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        .primary-btn:active {
+            background: #e00045;
+        }
+        .primary-btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .secondary-btn {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 14px 24px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Cairo', sans-serif;
+            font-size: 16px;
+        }
+
+        .progress-container {
+            margin-top: 12px;
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-input);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--accent);
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: center;
+        }
+
+        .bottom-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            border-top: 1px solid var(--border);
+            z-index: 100;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .footer-button {
+            background: none;
+            border: none;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'Cairo', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+        }
+        .footer-button:hover {
+            color: var(--accent);
+            transform: scale(1.05);
+        }
+        .icon {
+            font-size: 22px;
+            display: block;
+            margin-bottom: 2px;
+        }
+        .label {
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .footer-button.create-btn .icon {
+            font-size: 28px;
+            color: var(--accent);
+        }
+        .footer-button.create-btn:hover .icon {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        #hiddenFileInput,
+        #hiddenCameraInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <button class="icon-btn" onclick="history.back()"><i class="fas fa-arrow-right"></i></button>
+    <h2>إنشاء منشور جديد</h2>
+    <div></div>
+</div>
+
+<div class="form-container">
+    <div class="form-group">
+        <label>العنوان *</label>
+        <input type="text" id="title" placeholder="عنوان المنشور">
+    </div>
+    <div class="form-group">
+        <label>المحتوى *</label>
+        <textarea id="content" placeholder="اكتب أفكارك..."></textarea>
+    </div>
+    <div class="form-group">
+        <label>صورة (اختياري)</label>
+        <div class="image-upload-area" id="imageUploadArea">
+            <div class="upload-actions">
+                <button class="upload-btn" onclick="document.getElementById('hiddenFileInput').click()">
+                    <i class="fas fa-images"></i> معرض الصور
+                </button>
+                <button class="upload-btn" onclick="captureFromCamera()">
+                    <i class="fas fa-camera"></i> كاميرا
+                </button>
+            </div>
+            <img id="imagePreview" class="image-preview" alt="معاينة الصورة">
+            <button class="remove-image-btn" id="removeImageBtn" style="display:none;" onclick="event.stopPropagation(); removeImage()">&times;</button>
+        </div>
+        <input type="file" id="hiddenFileInput" accept="image/*" onchange="handleImageSelect(event)">
+        <input type="file" id="hiddenCameraInput" accept="image/*" capture="environment" onchange="handleImageSelect(event)">
+    </div>
+    <div class="form-group">
+        <label>التصنيف</label>
+        <select id="category">
+            <option value="عام">عام</option>
+            <option value="تقنية">تقنية</option>
+            <option value="رياضة">رياضة</option>
+            <option value="فن">فن</option>
+            <option value="أخبار">أخبار</option>
+            <option value="تعليم">تعليم</option>
+            <option value="ترفيه">ترفيه</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>هاشتاق</label>
+        <input type="text" id="hashtag" placeholder="مثال: RamzX">
+    </div>
+
+    <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">جاري رفع الصورة...</div>
+    </div>
+
+    <div class="actions-row">
+        <button class="primary-btn" id="publishBtn">📤 نشر</button>
+        <button class="secondary-btn" id="draftBtn"><i class="far fa-save"></i> حفظ كمسودة</button>
+    </div>
+</div>
+
+<div class="bottom-footer">
+    <a href="home.html" class="footer-button"><i class="fas fa-home icon"></i><div class="label">الصفحة الرئيسية</div></a>
+    <a href="explore.html" class="footer-button"><i class="fas fa-compass icon"></i><div class="label">استكشاف</div></a>
+    <a href="create-post.html" class="footer-button create-btn"><i class="fas fa-plus-circle icon"></i><div class="label">إنشاء</div></a>
+    <a href="inbox.html" class="footer-button"><i class="fas fa-inbox icon"></i><div class="label">صندوق الوارد</div></a>
+    <a href="profile.html" class="footer-button"><i class="fas fa-user icon"></i><div class="label">الملف الشخصي</div></a>
+</div>
+
+<script>
+    let selectedImageFile = null;
+
+    // معاينة الصورة المختارة
+    function handleImageSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        selectedImageFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('imagePreview').src = e.target.result;
+            document.getElementById('imagePreview').style.display = 'block';
+            document.getElementById('removeImageBtn').style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // إزالة الصورة المختارة
+    window.removeImage = function() {
+        selectedImageFile = null;
+        document.getElementById('hiddenFileInput').value = '';
+        document.getElementById('hiddenCameraInput').value = '';
+        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('removeImageBtn').style.display = 'none';
+    };
+
+    // فتح الكاميرا
+    function captureFromCamera() {
+        document.getElementById('hiddenCameraInput').click();
+    }
+
+    // عرض وإخفاء شريط التقدم
+    function showProgress(text) {
+        document.getElementById('progressContainer').style.display = 'block';
+        document.getElementById('progressText').textContent = text;
+    }
+    function updateProgress(percent) {
+        document.getElementById('progressFill').style.width = percent + '%';
+    }
+    function hideProgress() {
+        document.getElementById('progressContainer').style.display = 'none';
+        updateProgress(0);
+    }
+
+    // رفع الصورة إلى Supabase Storage
+    async function uploadImage(file) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 10)}.${fileExt}`;
+        const { data, error } = await supabase.storage
+            .from('ramz-x-images')
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+        if (error) {
+            console.error('Upload error:', error);
+            throw new Error(error.message || 'فشل رفع الصورة');
+        }
+        const { data: publicUrlData } = supabase.storage
+            .from('ramz-x-images')
+            .getPublicUrl(fileName);
+        return publicUrlData.publicUrl;
+    }
+
+    // حفظ المنشور (نشر أو مسودة)
+    async function savePost(status = 'published') {
+        const user = getCurrentUser();
+        if (!user) {
+            showToast('يجب تسجيل الدخول أولاً', true);
+            window.location.href = 'login.html';
+            return;
+        }
+
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('content').value.trim();
+        const category = document.getElementById('category').value;
+        const hashtag = document.getElementById('hashtag').value.trim();
+
+        if (!title && !content && status === 'published') {
+            showToast('العنوان والمحتوى مطلوبان للنشر', true);
+            return;
+        }
+
+        document.getElementById('publishBtn').disabled = true;
+        document.getElementById('draftBtn').disabled = true;
+
+        try {
+            let imageUrl = null;
+            if (selectedImageFile) {
+                showProgress('جاري رفع الصورة...');
+                updateProgress(30);
+                imageUrl = await uploadImage(selectedImageFile);
+                updateProgress(80);
+            }
+
+            showProgress(status === 'published' ? 'جاري النشر...' : 'جاري حفظ المسودة...');
+            updateProgress(90);
+
+            const { error } = await supabase.from('posts').insert({
+                author_id: user.id,
+                author_name: user.username,
+                title: title || 'مسودة بدون عنوان',
+                content: content || '',
+                image: imageUrl ? [imageUrl] : null,
+                category: category,
+                hashtag: hashtag || null,
+                hidden: status === 'draft',
+                created_at: new Date().toISOString()
+            });
+
+            if (error) throw error;
+
+            updateProgress(100);
+            showToast(status === 'published' ? '✅ تم النشر بنجاح' : '📝 تم حفظ المسودة');
+            setTimeout(() => { window.location.href = 'home.html'; }, 700);
+        } catch (err) {
+            console.error(err);
+            showToast('فشل: ' + (err.message || 'خطأ غير معروف'), true);
+            hideProgress();
+            document.getElementById('publishBtn').disabled = false;
+            document.getElementById('draftBtn').disabled = false;
+        }
+    }
+
+    document.getElementById('publishBtn').addEventListener('click', () => savePost('published'));
+    document.getElementById('draftBtn').addEventListener('click', () => savePost('draft'));
+
+    // تطبيق الثيم
+    (() => {
+        const saved = localStorage.getItem('darkMode');
+        if (saved === 'true') document.body.classList.remove('light');
+        else document.body.classList.add('light');
+    })();
+
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ Service Worker مسجل:', reg.scope))
+            .catch(err => console.warn('⚠️ فشل تسجيل Service Worker:', err));
+    }
+</script>
+</body>
+</html>
