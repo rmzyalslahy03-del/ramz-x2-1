@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>Ramz-X | الصفحة الرئيسية</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.0.0-beta3/css/all.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="common.js"></script>
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-card: #111111;
+            --bg-input: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #aaaaaa;
+            --text-muted: #777777;
+            --accent: #ff0050;
+            --accent-blue: #3b82f6;
+            --accent-orange: #ff7b00;
+            --border: #2c2c2c;
+            --radius: 1rem;
+            --btn-bg: rgba(30,30,35,0.9);
+            --btn-border: rgba(255,255,255,0.06);
+            --btn-active: #2a2a2a;
+            --overlay-bg: rgba(0,0,0,0.6);
+            --toast-bg: #000000dd;
+            --sheet-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            --toast-text: #ffffff;
+        }
+        body.light {
+            --bg-primary: #f5f5f5;
+            --bg-card: #ffffff;
+            --bg-input: #e8e8e8;
+            --text-primary: #111111;
+            --text-secondary: #444444;
+            --text-muted: #666666;
+            --border: #e0e0e0;
+            --btn-bg: rgba(0,0,0,0.05);
+            --btn-border: rgba(0,0,0,0.1);
+            --btn-active: #e0e0e0;
+            --overlay-bg: rgba(255,255,255,0.8);
+            --toast-bg: #ffffffdd;
+            --sheet-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            --toast-text: #111111;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: var(--bg-primary);
+            font-family: 'Cairo', sans-serif;
+            min-height: 100vh;
+            padding-bottom: 70px;
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--bg-primary); border-bottom: 0.5px solid var(--border); position: sticky; top: 0; z-index: 100; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+        .logo { font-size: 1.6rem; font-weight: 900; background: linear-gradient(135deg, var(--accent-blue), var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; cursor: pointer; }
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+        .icon-btn { background: none; border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; padding: 8px; border-radius: 50%; transition: 0.2s; }
+        .stories-row { display: flex; gap: 12px; padding: 12px 8px; overflow-x: auto; -webkit-scroll-snap-type: x mandatory; scroll-snap-type: x mandatory; scrollbar-width: none; }
+        .stories-row::-webkit-scrollbar { display: none; }
+        .story-item { flex: 0 0 auto; width: 68px; text-align: center; cursor: pointer; scroll-snap-align: start; }
+        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, var(--accent), var(--accent-blue), var(--accent-orange)); margin: 0 auto 4px; }
+        .story-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--bg-primary); }
+        .story-username { font-size: 10px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; }
+        .story-add .story-ring { background: var(--bg-input); border: 2px dashed var(--accent); display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); }
+        .feed-container { max-width: 600px; margin: 0 auto; padding: 8px; }
+        .post-card { background: var(--bg-card); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; border: 1px solid var(--border); transition: 0.2s; animation: fadeInUp 0.4s ease forwards; opacity: 0; position: relative; }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .post-header { display: flex; align-items: center; gap: 12px; padding: 12px; cursor: pointer; }
+        .author-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; background: var(--bg-input); border: 2px solid transparent; }
+        .author-info { flex: 1; min-width: 0; }
+        .author-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .author-name { font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+        .verified-badge { color: var(--accent-blue); font-size: 11px; }
+        .post-date { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+        .post-menu-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 50%; }
+        .images-container { overflow-x: auto; overflow-y: hidden; -webkit-scroll-snap-type: x mandatory; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; cursor: grab; background: var(--bg-card); position: relative; }
+        .images-container:active { cursor: grabbing; }
+        .images-container::-webkit-scrollbar { display: none; }
+        .images-wrapper { display: flex; flex-direction: row; flex-wrap: nowrap; }
+        .image-slide { scroll-snap-align: start; flex: 0 0 100%; width: 100%; }
+        .post-image { width: 100%; max-height: 450px; object-fit: cover; display: block; user-select: none; transition: filter 0.1s; background: var(--bg-input); }
+        .post-image.flash { filter: brightness(1.25); }
+        .image-counter { position: absolute; bottom: 12px; right: 12px; background: var(--overlay-bg); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--text-primary); padding: 4px 10px; border-radius: 30px; font-size: 12px; font-weight: 600; z-index: 5; pointer-events: none; }
+        .post-content { padding: 12px; }
+        .post-title { font-weight: 800; font-size: 18px; margin-bottom: 6px; color: var(--text-primary); }
+        .category-badge { font-size: 10px; background: var(--bg-input); padding: 3px 10px; border-radius: 20px; display: inline-block; margin-right: 6px; color: var(--text-secondary); cursor: pointer; }
+        .post-text { color: var(--text-secondary); font-size: 14px; line-height: 1.5; margin-bottom: 6px; max-height: 80px; overflow: hidden; transition: max-height 0.4s ease; }
+        .post-text.expanded { max-height: none; }
+        .more-btn { color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600; display: inline-block; }
+        .hashtag { color: var(--accent); font-size: 12px; margin-top: 4px; cursor: pointer; background: rgba(255, 0, 80, 0.1); padding: 4px 10px; border-radius: 20px; display: inline-block; }
+        .actions-bar { display: flex; justify-content: space-around; align-items: center; padding: 10px 12px; border-top: 0.5px solid var(--border); background: var(--bg-card); gap: 8px; flex-wrap: nowrap; }
+        .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; padding: 8px 12px; border-radius: 40px; background: var(--btn-bg); border: 1px solid var(--btn-border); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: var(--text-secondary); font-size: 14px; font-weight: 600; transition: all 0.2s; flex: 1; white-space: nowrap; min-width: 70px; font-family: 'Cairo', sans-serif; position: relative; }
+        .action-btn:active { transform: scale(0.95); background: var(--btn-active); }
+        .action-btn i, .action-btn .fallback-icon { font-size: 18px; width: 24px; text-align: center; }
+        .action-btn .fallback-icon { display: none; }
+        body.no-fontawesome .action-btn i { display: none; }
+        body.no-fontawesome .action-btn .fallback-icon { display: inline-block; }
+        .action-btn .number { font-size: 14px; font-weight: 700; }
+        .action-btn.liked i, .action-btn.liked .fallback-icon, .action-btn.liked .number { color: #ff2a6d; }
+        .action-btn.saved i, .action-btn.saved .fallback-icon { color: #ffcc44; }
+        .action-btn.reposted i, .action-btn.reposted .fallback-icon { color: #4caf50; }
+        @keyframes heartBeat { 0%,100%{transform:scale(1)} 40%{transform:scale(1.2)} }
+        .action-btn.liked i { animation: heartBeat 0.3s ease; }
+        .ripple { position: absolute; border-radius: 50%; transform: scale(0); animation: rippleEffect 0.5s ease-out; pointer-events: none; }
+        .ripple.red { background: rgba(255,42,109,0.4); } .ripple.green { background: rgba(76,175,80,0.4); } .ripple.yellow { background: rgba(255,204,68,0.4); }
+        @keyframes rippleEffect { to { transform: scale(4); opacity: 0; } }
+        .flying-heart { position: fixed; font-size: 22px; pointer-events: none; z-index: 2000; color: #ff2a6d; will-change: transform, opacity; }
+
+        .comments-bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; height: 75%; max-height: 85%; margin: 0 auto; background: var(--bg-card); border-top-left-radius: 25px; border-top-right-radius: 25px; transition: bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2100; display: flex; flex-direction: column; box-shadow: var(--sheet-shadow); max-width: 600px; }
+        .comments-bottom-sheet.open { bottom: 0; }
+        .sheet-handle { width: 40px; height: 4px; background: var(--text-muted); border-radius: 2px; margin: 8px auto; cursor: grab; }
+        .sheet-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 20px 15px; border-bottom: 1px solid var(--border); }
+        .sheet-header h3 { font-size: 17px; font-weight: 700; }
+        .close-sheet-btn { background: var(--bg-input); border: none; color: var(--text-primary); font-size: 20px; cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .comments-list-container { flex: 1; overflow-y: auto; padding: 10px 15px; }
+        .comment-item { margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+        .comment-main { display: flex; gap: 10px; }
+        .comment-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .comment-content { flex: 1; background: var(--bg-input); padding: 10px 14px; border-radius: 18px; border-top-right-radius: 4px; position: relative; }
+        .comment-author { font-weight: 700; font-size: 13px; color: var(--accent); }
+        .comment-text { font-size: 13px; margin-top: 3px; color: var(--text-primary); }
+        .comment-time { font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+        .comment-actions { display: flex; gap: 16px; margin-top: 6px; padding-right: 10px; flex-wrap: wrap; }
+        .comment-action { cursor: pointer; font-size: 11px; color: var(--text-muted); display: flex; gap: 4px; align-items: center; transition: 0.2s; }
+        .comment-action.liked { color: var(--accent); }
+        .comment-action:hover { color: var(--accent); }
+        .reply-container { margin-right: 30px; margin-top: 8px; border-right: 2px solid var(--border); padding-right: 10px; }
+        .reply-item { margin-bottom: 8px; }
+        .edit-input { width: 100%; background: var(--bg-input); border: 1px solid var(--accent); border-radius: 15px; padding: 6px 12px; color: var(--text-primary); font-size: 13px; margin-top: 4px; }
+        .comment-input-area { background: var(--bg-card); padding: 10px 15px; display: flex; gap: 8px; border-top: 1px solid var(--border); align-items: center; position: relative; }
+        .comment-input-area input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 25px; padding: 10px 16px; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-size: 13px; outline: none; }
+        .comment-input-area input:focus { border-color: var(--accent); }
+        .input-icon-btn { background: none; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 6px; border-radius: 50%; }
+        .send-btn { background: var(--accent); border: none; border-radius: 25px; padding: 10px 20px; color: white; font-weight: 700; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 13px; }
+        .send-btn:active { transform: scale(0.95); background: #e00045; }
+
+        .emoji-picker {
+            position: absolute; bottom: 65px; right: 10px; background: var(--bg-card); border-radius: 15px; padding: 10px;
+            width: 280px; max-height: 200px; overflow-y: auto; display: none; z-index: 2200; flex-wrap: wrap; gap: 4px;
+            box-shadow: var(--sheet-shadow); border: 1px solid var(--border);
+        }
+        .emoji-picker.active { display: flex; }
+        .emoji-option { font-size: 24px; cursor: pointer; padding: 6px; border-radius: 8px; transition: 0.2s; }
+        .emoji-option:hover { background: var(--bg-input); }
+
+        .attach-sheet {
+            position: fixed; bottom: -100%; left: 0; right: 0; background: var(--bg-card);
+            border-top-left-radius: 25px; border-top-right-radius: 25px; transition: bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 2200; padding: 16px; display: flex; flex-direction: column; box-shadow: var(--sheet-shadow);
+            max-width: 600px; margin: 0 auto;
+        }
+        .attach-sheet.open { bottom: 0; }
+        .attach-options { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 16px; }
+        .attach-option { width: 70px; text-align: center; cursor: pointer; transition: 0.2s; color: var(--text-secondary); }
+        .attach-option:active { transform: scale(0.9); }
+        .attach-option .icon-circle { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-input); display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 22px; }
+        .attach-option span { font-size: 11px; font-weight: 600; }
+        .close-attach-btn { align-self: flex-end; background: var(--bg-input); border: none; color: var(--text-primary); font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+
+        .share-bottom-sheet { position: fixed; bottom: -100%; left: 0; right: 0; height: 55%; max-width: 600px; margin: 0 auto; background: var(--bg-card); border-top-left-radius: 25px; border-top-right-radius: 25px; transition: bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1); z-index: 2100; display: flex; flex-direction: column; box-shadow: var(--sheet-shadow); }
+        .share-bottom-sheet.open { bottom: 0; }
+        .share-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 10px; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+        .share-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { background: none; border: none; color: var(--text-muted); padding: 12px 16px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; animation: fadeInUp 0.3s ease; }
+        .social-icons { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 10px; }
+        .social-icon { width: 65px; text-align: center; cursor: pointer; transition: 0.2s; }
+        .social-icon:active { transform: scale(0.9); }
+        .social-icon .icon-circle { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 24px; color: white; }
+        .social-icon span { font-size: 10px; color: var(--text-secondary); font-weight: 600; }
+        .social-icon.copy-link .icon-circle { background: var(--accent); }
+        .social-icon.whatsapp .icon-circle { background: #25D366; }
+        .social-icon.facebook .icon-circle { background: #1877F2; }
+        .social-icon.twitter .icon-circle { background: #1DA1F2; }
+        .social-icon.telegram .icon-circle { background: #0088CC; }
+        .social-icon.instagram .icon-circle { background: #E4405F; }
+        .social-icon.email .icon-circle { background: #666; }
+
+        .bottom-footer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-card); display: flex; justify-content: space-around; padding: 8px 0; border-top: 1px solid var(--border); z-index: 100; max-width: 600px; margin: 0 auto; }
+        .footer-button { background: none; border: none; text-align: center; cursor: pointer; transition: 0.2s; color: var(--text-secondary); text-decoration: none; font-family: 'Cairo', sans-serif; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .footer-button:hover { color: var(--accent); transform: scale(1.05); }
+        .icon { font-size: 22px; display: block; margin-bottom: 2px; }
+        .label { font-size: 11px; font-weight: 600; }
+        .footer-button.create-btn .icon { font-size: 28px; color: var(--accent); }
+        .footer-button.create-btn:hover .icon { color: var(--accent); transform: scale(1.1); }
+        @media (max-width: 480px) {
+            .action-btn { padding: 6px 8px; font-size: 12px; min-width: 60px; }
+            .action-btn i, .action-btn .fallback-icon { font-size: 16px; width: 22px; }
+            .action-btn .number { font-size: 12px; }
+            .flying-heart { font-size: 18px; }
+        }
+        .infinite-loader { text-align: center; padding: 24px; color: var(--accent); display: none; align-items: center; justify-content: center; gap: 10px; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .reply-input-area { display: flex; gap: 8px; margin: 8px 0; }
+        .reply-input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); border-radius: 20px; padding: 6px 12px; color: var(--text-primary); }
+        .send-reply-btn { background: var(--accent); border: none; border-radius: 20px; padding: 6px 12px; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="logo" onclick="window.location.href='home.html'">Ramz-X</div>
+    <div class="header-actions">
+        <button class="icon-btn" onclick="window.location.href='search.html'"><i class="fas fa-search"></i></button>
+        <button class="icon-btn" id="darkModeToggle"><i class="fas fa-moon"></i></button>
+        <button class="icon-btn" onclick="window.location.href='friends.html'"><i class="fas fa-users"></i></button>
+    </div>
+</div>
+<main>
+    <div class="stories-row" id="storiesRow">
+        <div class="story-item story-add" onclick="showToast('📸 افتح الكاميرا لإضافة ستوري')">
+            <div class="story-ring"><span>+</span></div>
+            <div class="story-username">أضف ستوري</div>
+        </div>
+    </div>
+    <div class="feed-container" id="feedContainer">
+        <div class="empty-state"><i class="fas fa-spinner fa-pulse"></i><p>جاري تحميل المنشورات...</p></div>
+    </div>
+    <div id="infiniteLoader" class="infinite-loader"><i class="fas fa-spinner fa-pulse spinner"></i> جاري تحميل المزيد...</div>
+</main>
+
+<div class="bottom-footer">
+    <a href="home.html" class="footer-button" id="homeNavBtn"><i class="fas fa-home icon"></i><div class="label">الصفحة الرئيسية</div></a>
+    <a href="explore.html" class="footer-button"><i class="fas fa-compass icon"></i><div class="label">استكشاف</div></a>
+    <a href="create-post.html" class="footer-button create-btn"><i class="fas fa-plus-circle icon"></i><div class="label">إنشاء</div></a>
+    <a href="inbox.html" class="footer-button"><i class="fas fa-inbox icon"></i><div class="label">صندوق الوارد</div></a>
+    <a href="profile.html" class="footer-button"><i class="fas fa-user icon"></i><div class="label">الملف الشخصي</div></a>
+</div>
+
+<div id="commentsSheet" class="comments-bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>💬 التعليقات (<span id="sheetCommentsCount">0</span>)</h3><button class="close-sheet-btn" id="closeSheetBtn">&times;</button></div>
+    <div class="comments-list-container" id="sheetCommentsList"></div>
+    <div class="comment-input-area">
+        <button class="input-icon-btn" id="emojiBtn"><i class="far fa-smile-wink"></i></button>
+        <button class="input-icon-btn" id="attachBtn"><i class="fas fa-paperclip"></i></button>
+        <input type="text" id="newCommentInput" placeholder="اكتب تعليقاً...">
+        <button class="send-btn" id="sendCommentBtn">إرسال</button>
+        <div id="emojiPicker" class="emoji-picker"></div>
+    </div>
+</div>
+
+<div id="attachSheet" class="attach-sheet">
+    <button class="close-attach-btn" id="closeAttachBtn">&times;</button>
+    <h4 style="text-align:center; margin-bottom:10px;">📎 إرفاق محتوى</h4>
+    <div class="attach-options">
+        <div class="attach-option" data-type="gallery"><div class="icon-circle"><i class="fas fa-images"></i></div><span>المعرض</span></div>
+        <div class="attach-option" data-type="camera"><div class="icon-circle"><i class="fas fa-camera"></i></div><span>كاميرا</span></div>
+        <div class="attach-option" data-type="document"><div class="icon-circle"><i class="fas fa-file-alt"></i></div><span>مستند</span></div>
+        <div class="attach-option" data-type="contact"><div class="icon-circle"><i class="fas fa-address-book"></i></div><span>جهة اتصال</span></div>
+        <div class="attach-option" data-type="location"><div class="icon-circle"><i class="fas fa-map-marker-alt"></i></div><span>موقع</span></div>
+        <div class="attach-option" data-type="audio"><div class="icon-circle"><i class="fas fa-microphone"></i></div><span>مقطع صوتي</span></div>
+        <div class="attach-option" data-type="poll"><div class="icon-circle"><i class="fas fa-poll"></i></div><span>استطلاع رأي</span></div>
+    </div>
+    <input type="file" id="hiddenFileInput" style="display:none">
+</div>
+
+<div id="shareAdvancedSheet" class="share-bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header"><h3>📤 مشاركة متقدمة</h3><button class="close-sheet-btn" id="closeShareSheetBtn">&times;</button></div>
+    <div class="share-tabs">
+        <button class="tab-btn active" data-tab="tab-share">مشاركة</button>
+        <button class="tab-btn" data-tab="tab-download">تحميل</button>
+        <button class="tab-btn" data-tab="tab-report">تبليغ</button>
+        <button class="tab-btn" data-tab="tab-embed">تضمين</button>
+        <button class="tab-btn" data-tab="tab-qr">QR Code</button>
+    </div>
+    <div class="tab-content">
+        <div class="tab-pane active" id="tab-share">
+            <div class="social-icons">
+                <div class="social-icon whatsapp" data-platform="whatsapp"><div class="icon-circle"><i class="fab fa-whatsapp"></i></div><span>واتساب</span></div>
+                <div class="social-icon facebook" data-platform="facebook"><div class="icon-circle"><i class="fab fa-facebook-f"></i></div><span>فيسبوك</span></div>
+                <div class="social-icon twitter" data-platform="twitter"><div class="icon-circle"><i class="fab fa-twitter"></i></div><span>تويتر</span></div>
+                <div class="social-icon telegram" data-platform="telegram"><div class="icon-circle"><i class="fab fa-telegram-plane"></i></div><span>تيليجرام</span></div>
+                <div class="social-icon instagram" data-platform="instagram"><div class="icon-circle"><i class="fab fa-instagram"></i></div><span>انستقرام</span></div>
+                <div class="social-icon email" data-platform="email"><div class="icon-circle"><i class="fas fa-envelope"></i></div><span>بريد</span></div>
+                <div class="social-icon copy-link" data-platform="copy"><div class="icon-circle"><i class="fas fa-link"></i></div><span>نسخ الرابط</span></div>
+            </div>
+        </div>
+        <div class="tab-pane" id="tab-download"><div style="text-align:center;padding:40px;"><button class="send-btn" onclick="downloadPostImage()"><i class="fas fa-download"></i> تحميل صورة المنشور</button></div></div>
+        <div class="tab-pane" id="tab-report"><div style="text-align:center;padding:40px;"><p>إبلاغ عن هذا المحتوى</p><button class="send-btn" onclick="reportCurrentPost()"><i class="fas fa-flag"></i> إبلاغ</button></div></div>
+        <div class="tab-pane" id="tab-embed"><div style="text-align:center;padding:40px;"><p>كود التضمين:</p><code style="background:var(--bg-input);padding:10px;border-radius:8px;display:block;" id="embedCode">&lt;iframe src="..."&gt;&lt;/iframe&gt;</code></div></div>
+        <div class="tab-pane" id="tab-qr"><div style="text-align:center;padding:40px;"><p>📱 مسح QR Code</p><div style="width:150px;height:150px;background:white;margin:20px auto;border-radius:12px;display:flex;align-items:center;justify-content:center;color:black;">QR قريباً</div></div></div>
+    </div>
+</div>
+
+<script>
+    // ===================== دوال مساعدة محلية =====================
+    function parseNumberFromFormatted(str) {
+        if (!str) return 0; str = str.toString();
+        if (str.includes('M')) return parseFloat(str) * 1_000_000;
+        if (str.includes('K')) return parseFloat(str) * 1000;
+        return parseInt(str, 10);
+    }
+
+    function addRipple(e, el, colorClass) {
+        const ripple = document.createElement('span');
+        ripple.className = `ripple ${colorClass}`;
+        const rect = el.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+        el.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 500);
+    }
+
+    function burstHearts(x, y) {
+        for (let i=0; i<10; i++) {
+            const heart = document.createElement('div'); heart.className = 'flying-heart'; heart.innerHTML = '❤️';
+            heart.style.left = (x + (Math.random()-0.5)*40) + 'px'; heart.style.top = (y + (Math.random()-0.5)*30) + 'px';
+            heart.style.fontSize = (15+Math.random()*15) + 'px'; const angle = Math.random()*Math.PI/1.5 - Math.PI/3, v = 80+Math.random()*60;
+            heart.animate([
+                { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+                { transform: `translate(${Math.sin(angle)*v}px, ${-Math.abs(Math.cos(angle))*v-30}px) rotate(${(Math.random()-0.5)*60}deg)`, opacity: 0 }
+            ], { duration: 600+Math.random()*300, fill: 'forwards' });
+            setTimeout(() => heart.remove(), 1000);
+        }
+    }
+
+    function flashCurrentImage(postId) {
+        const card = document.getElementById(`post-${postId}`);
+        if (!card) return;
+        const img = card.querySelector('.images-container')?.querySelectorAll('.post-image')[0];
+        if (img) { img.classList.add('flash'); setTimeout(() => img.classList.remove('flash'), 120); }
+    }
+
+    function attachImageScrollers() {
+        document.querySelectorAll('.images-container').forEach(container => {
+            const counter = container.querySelector('.image-counter');
+            const slides = container.querySelectorAll('.image-slide');
+            if (slides.length <= 1) return;
+            const updateCounter = () => {
+                if (!counter) return;
+                const idx = Math.round(container.scrollLeft / container.clientWidth);
+                counter.innerText = `${idx+1}/${slides.length}`;
+            };
+            container.addEventListener('scroll', updateCounter);
+            window.addEventListener('resize', updateCounter);
+            updateCounter();
+            container.querySelectorAll('.post-image').forEach(img => {
+                img.addEventListener('dblclick', e => {
+                    e.stopPropagation();
+                    const postCard = container.closest('.post-card');
+                    const likeBtn = postCard.querySelector('.like-btn');
+                    if (likeBtn) toggleLike(postCard.dataset.id, likeBtn, true, e);
+                });
+            });
+        });
+    }
+
+    // ===================== المشاهدات (تراكمية مع تحديث الواجهة) =====================
+    let recentViewsSet = new Set();
+    let viewThrottleTimer = null;
+
+    function setupViewObserver() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const postId = entry.target.dataset.id;
+                    if (!postId || recentViewsSet.has(postId)) return;
+                    recentViewsSet.add(postId);
+                    incrementViews(postId).catch(console.warn);
+                    const viewsSpan = entry.target.querySelector('.views-btn .number');
+                    if (viewsSpan) {
+                        let current = parseNumberFromFormatted(viewsSpan.innerText);
+                        viewsSpan.innerText = formatNumber(current + 1);
+                    }
+                    clearTimeout(viewThrottleTimer);
+                    viewThrottleTimer = setTimeout(() => { recentViewsSet.clear(); }, 10000);
+                }
+            });
+        }, { threshold: 0.5 });
+        document.querySelectorAll('.post-card').forEach(card => observer.observe(card));
+    }
+
+    // ===================== البيانات والتحميل =====================
+    let feedPosts = [], feedLastCursor = null, feedHasMore = true, feedIsLoading = false;
+
+    async function fetchFeedPage(limit = 10) {
+        if (feedIsLoading) return [];
+        feedIsLoading = true;
+        try {
+            let query = supabase
+                .from('posts')
+                .select(`*, users:author_id (id, username, avatar, verified)`)
+                .eq('hidden', false)
+                .order('created_at', { ascending: false })
+                .limit(limit);
+            if (feedLastCursor) query = query.lt('created_at', feedLastCursor);
+            const { data, error } = await query;
+            if (error) throw error;
+            if (!data || data.length === 0) { feedHasMore = false; return []; }
+            feedLastCursor = data[data.length-1].created_at;
+            return data.map(p => ({
+                id: p.id, title: p.title, content: p.content,
+                image: parseImages(p.image),
+                author_id: p.author_id,
+                author_name: p.users?.username || p.author_name,
+                author_avatar: p.users?.avatar,
+                created_at: p.created_at,
+                likes_count: p.likes_count || 0,
+                comments_count: p.comments_count || 0,
+                views_count: p.views_count || 0,
+                reposts_count: p.reposts_count || 0,
+                favorites_count: p.favorites_count || 0,
+                hashtag: p.hashtag,
+                category: p.category || 'عام',
+                verified: p.users?.verified || false
+            }));
+        } catch(err) { console.error(err); return []; }
+        finally { feedIsLoading = false; }
+    }
+
+    async function renderFeed(posts, append = false) {
+        const container = document.getElementById('feedContainer');
+        if (!posts.length && !append) {
+            container.innerHTML = '<div class="empty-state"><i class="far fa-newspaper"></i><p>لا توجد منشورات بعد</p></div>';
+            return;
+        }
+        let html = '';
+        for (let p of posts) {
+            const imagesArray = p.image || [];
+            const slides = imagesArray.map((img, idx) => `<div class="image-slide"><img class="post-image" src="${img}" alt="صورة ${idx+1}" loading="lazy"></div>`).join('');
+            html += `<div class="post-card" data-id="${p.id}" id="post-${p.id}">
+                <div class="post-header" onclick="window.location.href='public-profile.html?user=${p.author_id}'"><img class="author-avatar" src="${p.author_avatar}" alt=""><div class="author-info"><div class="author-name-row"><span class="author-name">${escapeHtml(p.author_name)}</span>${p.verified ? '<i class="fas fa-check-circle verified-badge"></i>' : ''}</div><div class="post-date">${timeAgo(p.created_at)}</div></div><button class="post-menu-btn" onclick="event.stopPropagation(); showPostMenu('${p.id}')"><i class="fas fa-ellipsis-h"></i></button></div>
+                ${imagesArray.length ? `<div class="images-container" data-post-id="${p.id}"><div class="images-wrapper">${slides}</div>${imagesArray.length > 1 ? `<div class="image-counter">1/${imagesArray.length}</div>` : ''}</div>` : ''}
+                <div class="post-content"><div class="post-title">${escapeHtml(p.title)} <span class="category-badge" onclick="event.stopPropagation(); window.location.href='search.html?q=${encodeURIComponent(p.category)}'">${escapeHtml(p.category)}</span></div><div class="post-text" id="post-text-${p.id}">${escapeHtml(p.content || '').substring(0,150)}${p.content?.length>150?'...':''}</div>${p.content?.length>150 ? `<span class="more-btn" onclick="toggleFullText('${p.id}')" id="more-btn-${p.id}">...عرض المزيد</span>` : ''}${p.hashtag ? `<div class="hashtag" onclick="window.location.href='search.html?q=${encodeURIComponent(p.hashtag)}'">#${escapeHtml(p.hashtag)}</div>` : ''}</div>
+                <div class="actions-bar">
+                    <button class="action-btn like-btn" data-id="${p.id}" onclick="handleLikeClick(this, event, '${p.id}')"><span class="number">${formatNumber(p.likes_count)}</span><i class="far fa-heart"></i><span class="fallback-icon">❤️</span></button>
+                    <button class="action-btn comment-btn" data-id="${p.id}" onclick="openComments('${p.id}')"><span class="number">${formatNumber(p.comments_count)}</span><i class="far fa-comment"></i><span class="fallback-icon">💬</span></button>
+                    <button class="action-btn share-btn" data-id="${p.id}" onclick="handleRepostClick(this, event, '${p.id}')" oncontextmenu="event.preventDefault(); openShareAdvanced('${p.id}')"><span class="number">${formatNumber(p.reposts_count)}</span><i class="far fa-share-square"></i><span class="fallback-icon">🔄</span></button>
+                    <button class="action-btn save-btn" data-id="${p.id}" onclick="handleSaveClick(this, event, '${p.id}')"><span class="number">${formatNumber(p.favorites_count)}</span><i class="far fa-bookmark"></i><span class="fallback-icon">⭐</span></button>
+                    <button class="action-btn views-btn" data-id="${p.id}" disabled style="opacity:0.7; cursor:default;"><span class="number">${formatNumber(p.views_count)}</span><i class="far fa-eye"></i><span class="fallback-icon">👁️</span></button>
+                </div>
+            </div>`;
+        }
+        if(append) container.insertAdjacentHTML('beforeend', html); else container.innerHTML = html;
+        attachImageScrollers();
+        setupViewObserver();
+    }
+
+    async function refreshFeed() {
+        feedLastCursor = null; feedHasMore = true; feedIsLoading = false;
+        feedPosts = await fetchFeedPage(10);
+        await renderFeed(feedPosts, false);
+        document.getElementById('infiniteLoader').style.display = feedHasMore ? 'flex' : 'none';
+    }
+
+    async function loadMore() {
+        if (feedIsLoading || !feedHasMore) return;
+        document.getElementById('infiniteLoader').style.display = 'flex';
+        const newPosts = await fetchFeedPage(10);
+        if (newPosts.length) { feedPosts.push(...newPosts); await renderFeed(newPosts, true); }
+        if (!feedHasMore) document.getElementById('infiniteLoader').style.display = 'none';
+        feedIsLoading = false;
+    }
+    window.onscroll = () => { if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) loadMore(); };
+
+    // ===================== التفاعلات =====================
+    async function toggleLike(postId, btnElement, isDoubleTap = false, event = null) {
+        const user = getCurrentUser();
+        if (!user) { showToast('يرجى تسجيل الدخول أولاً', true); return; }
+        if (event && !isDoubleTap) addRipple(event, btnElement, 'red');
+        const isLiked = btnElement.classList.contains('liked');
+        const countSpan = btnElement.querySelector('.number');
+        let current = countSpan ? parseNumberFromFormatted(countSpan.innerText) : 0;
+        const icon = btnElement.querySelector('i'), fallback = btnElement.querySelector('.fallback-icon');
+        if (!isLiked) {
+            btnElement.classList.add('liked'); if (icon) icon.className = 'fas fa-heart'; if (fallback) fallback.style.color = '#ff2a6d'; if (countSpan) countSpan.innerText = formatNumber(current + 1);
+            try { await supabase.from('likes').insert({ user_id: user.id, post_id: postId }); await incrementLikes(postId); if (isDoubleTap && event) { burstHearts(event.clientX, event.clientY); flashCurrentImage(postId); } showToast('👍 تم الإعجاب'); }
+            catch (e) { btnElement.classList.remove('liked'); if (icon) icon.className = 'far fa-heart'; if (fallback) fallback.style.color = ''; if (countSpan) countSpan.innerText = formatNumber(current); showToast('حدث خطأ أثناء الإعجاب', true); }
+        } else {
+            btnElement.classList.remove('liked'); if (icon) icon.className = 'far fa-heart'; if (fallback) fallback.style.color = ''; if (countSpan) countSpan.innerText = formatNumber(Math.max(0, current - 1));
+            try { await supabase.from('likes').delete().eq('user_id', user.id).eq('post_id', postId); await decrementLikes(postId); showToast('👎 تم إلغاء الإعجاب'); }
+            catch (e) { btnElement.classList.add('liked'); if (icon) icon.className = 'fas fa-heart'; if (fallback) fallback.style.color = '#ff2a6d'; if (countSpan) countSpan.innerText = formatNumber(current); showToast('حدث خطأ أثناء إلغاء الإعجاب', true); }
+        }
+    }
+
+    async function toggleFavorite(postId, btnElement, event) {
+        const user = getCurrentUser(); if (!user) { showToast('يرجى تسجيل الدخول', true); return; }
+        if (event) addRipple(event, btnElement, 'yellow');
+        const isSaved = btnElement.classList.contains('saved'); const countSpan = btnElement.querySelector('.number'); let current = countSpan ? parseNumberFromFormatted(countSpan.innerText) : 0;
+        const icon = btnElement.querySelector('i'), fallback = btnElement.querySelector('.fallback-icon');
+        if (!isSaved) {
+            btnElement.classList.add('saved'); if (icon) icon.className = 'fas fa-bookmark'; if (fallback) fallback.style.color = '#ffcc44'; if (countSpan) countSpan.innerText = formatNumber(current + 1);
+            try { await supabase.from('favorites').insert({ user_id: user.id, post_id: postId }); await incrementFavorites(postId); showToast('⭐ تم الحفظ'); }
+            catch (e) { btnElement.classList.remove('saved'); if (icon) icon.className = 'far fa-bookmark'; if (fallback) fallback.style.color = ''; if (countSpan) countSpan.innerText = formatNumber(current); showToast('خطأ في الحفظ', true); }
+        } else {
+            btnElement.classList.remove('saved'); if (icon) icon.className = 'far fa-bookmark'; if (fallback) fallback.style.color = ''; if (countSpan) countSpan.innerText = formatNumber(Math.max(0, current - 1));
+            try { await supabase.from('favorites').delete().eq('user_id', user.id).eq('post_id', postId); await decrementFavorites(postId); showToast('تمت الإزالة من المفضلة'); }
+            catch (e) { btnElement.classList.add('saved'); if (icon) icon.className = 'fas fa-bookmark'; if (fallback) fallback.style.color = '#ffcc44'; if (countSpan) countSpan.innerText = formatNumber(current); showToast('خطأ في الإزالة', true); }
+        }
+    }
+
+    async function toggleRepost(postId, btnElement, event) {
+        const user = getCurrentUser(); if (!user) { showToast('يرجى تسجيل الدخول', true); return; }
+        if (event) addRipple(event, btnElement, 'green');
+        const isReposted = btnElement.classList.contains('reposted'); const countSpan = btnElement.querySelector('.number'); let current = countSpan ? parseNumberFromFormatted(countSpan.innerText) : 0;
+        const icon = btnElement.querySelector('i'), fallback = btnElement.querySelector('.fallback-icon');
+        if (!isReposted) {
+            btnElement.classList.add('reposted'); if (icon) icon.className = 'fas fa-share-square'; if (fallback) fallback.style.color = '#4caf50'; if (countSpan) countSpan.innerText = formatNumber(current + 1);
+            try {
+                const { data: original } = await supabase.from('posts').select('*, users!author_id (username)').eq('id', postId).single();
+                if (original) { const authorName = original.users?.username || original.author_name || 'مستخدم'; await supabase.from('posts').insert({ title: original.title, content: `🔄 أعاد ${user.username} نشر منشور ${authorName}\n\n${original.content}`, image: original.image, author_id: user.id, author_name: user.username, hashtag: original.hashtag, category: original.category, created_at: new Date().toISOString() }); await incrementReposts(postId); }
+                showToast('🔁 تمت إعادة النشر');
+            } catch (e) { btnElement.classList.remove('reposted'); if (icon) icon.className = 'far fa-share-square'; if (fallback) fallback.style.color = ''; if (countSpan) countSpan.innerText = formatNumber(current); showToast('خطأ في إعادة النشر', true); }
+        } else {
+            btnElement.classList.remove('reposted'); if (icon) icon.className = 'far fa-share-square'; if (fallback) fallback.style.color = ''; if (countSpan) countSpan.innerText = formatNumber(Math.max(0, current - 1));
+            try { const { data: reposted } = await supabase.from('posts').select('id').eq('author_id', user.id).like('content', `🔄 أعاد ${user.username} نشر%`).order('created_at', { ascending: false }).limit(1).single(); if (reposted) await supabase.from('posts').delete().eq('id', reposted.id); await decrementReposts(postId); showToast('↩️ تم إلغاء إعادة النشر'); }
+            catch (e) { btnElement.classList.add('reposted'); if (icon) icon.className = 'fas fa-share-square'; if (fallback) fallback.style.color = '#4caf50'; if (countSpan) countSpan.innerText = formatNumber(current); showToast('خطأ في إلغاء النشر', true); }
+        }
+    }
+
+    window.handleLikeClick = (btn, e, id) => toggleLike(id, btn, false, e);
+    window.handleSaveClick = (btn, e, id) => toggleFavorite(id, btn, e);
+    window.handleRepostClick = (btn, e, id) => toggleRepost(id, btn, e);
+
+    window.toggleFullText = function(postId) {
+        const textDiv = document.getElementById(`post-text-${postId}`), moreBtn = document.getElementById(`more-btn-${postId}`);
+        if(textDiv.classList.contains('expanded')) { textDiv.classList.remove('expanded'); const post = feedPosts.find(p=>p.id===postId); textDiv.textContent = (post?.content || '').substring(0,150)+(post?.content?.length>150?'...':''); if(moreBtn) moreBtn.textContent = '...عرض المزيد'; }
+        else { textDiv.classList.add('expanded'); const post = feedPosts.find(p=>p.id===postId); textDiv.textContent = post?.content || ''; if(moreBtn) moreBtn.textContent = 'عرض أقل'; }
+    };
+    window.showPostMenu = (id) => showToast('قائمة المنشور');
+
+    // ===================== التعليقات =====================
+    let currentCommentPostId = null;
+
+    window.openComments = async function(postId) {
+        currentCommentPostId = postId;
+        document.getElementById('commentsSheet').classList.add('open');
+        await loadComments(postId);
+    };
+
+    async function loadComments(postId) {
+        const user = getCurrentUser();
+        const list = document.getElementById('sheetCommentsList');
+        list.innerHTML = '<div style="text-align:center;color:var(--text-muted);">جاري تحميل التعليقات...</div>';
+        const { data: comments, error } = await supabase
+            .from('comments')
+            .select('*, users:user_id (username, avatar)')
+            .eq('post_id', postId)
+            .order('created_at', { ascending: true });
+        if (error || !comments || comments.length === 0) {
+            list.innerHTML = '<p style="text-align:center;color:var(--text-muted);">لا توجد تعليقات</p>';
+            document.getElementById('sheetCommentsCount').innerText = '0';
+            return;
+        }
+        let likedCommentIds = new Set();
+        if (user) {
+            const { data: likes } = await supabase
+                .from('comment_likes')
+                .select('comment_id')
+                .eq('user_id', user.id)
+                .in('comment_id', comments.map(c => c.id));
+            if (likes) likes.forEach(l => likedCommentIds.add(l.comment_id));
+        }
+        const rootComments = comments.filter(c => !c.parent_id);
+        const repliesMap = {};
+        comments.forEach(c => { if (c.parent_id) { if (!repliesMap[c.parent_id]) repliesMap[c.parent_id] = []; repliesMap[c.parent_id].push(c); } });
+        function buildCommentHTML(comment, isReply = false) {
+            const isLiked = likedCommentIds.has(comment.id);
+            const isOwner = user && comment.user_id === user.id;
+            const replies = repliesMap[comment.id] || [];
+            let html = `<div class="comment-item ${isReply ? 'reply-item' : ''}" id="comment-${comment.id}"><div class="comment-main"><img class="comment-avatar" src="${comment.users?.avatar || 'https://randomuser.me/api/portraits/lego/1.jpg'}" alt=""><div class="comment-content"><div class="comment-author">${escapeHtml(comment.users?.username || 'مستخدم')} ${comment.edited ? ' <span style="font-size:10px;color:var(--text-muted);">(معدّل)</span>' : ''}</div><div class="comment-text" id="comment-text-${comment.id}">${escapeHtml(comment.text)}</div><div class="comment-time" title="${new Date(comment.created_at).toLocaleString('ar')}">${timeAgo(comment.created_at)}</div></div></div><div class="comment-actions"><span class="comment-action like-comment ${isLiked ? 'liked' : ''}" data-comment-id="${comment.id}"><i class="${isLiked ? 'fas' : 'far'} fa-heart"></i> <span class="like-count">${comment.likes || 0}</span></span><span class="comment-action reply-comment" data-comment-id="${comment.id}"><i class="far fa-comment-dots"></i> رد</span>${isOwner ? `<span class="comment-action edit-comment" data-comment-id="${comment.id}"><i class="far fa-edit"></i> تعديل</span><span class="comment-action delete-comment" data-comment-id="${comment.id}"><i class="far fa-trash-alt"></i> حذف</span>` : ''}</div>`;
+            if (replies.length) { html += `<div class="reply-container" id="replies-${comment.id}">`; replies.forEach(reply => html += buildCommentHTML(reply, true)); html += `</div>`; }
+            html += `</div>`; return html;
+        }
+        list.innerHTML = rootComments.map(root => buildCommentHTML(root)).join('');
+        document.getElementById('sheetCommentsCount').innerText = comments.length;
+        attachCommentEvents();
+    }
+
+    function attachCommentEvents() {
+        document.querySelectorAll('.like-comment').forEach(el => {
+            el.onclick = async (e) => {
+                e.stopPropagation(); const commentId = el.dataset.commentId; const user = getCurrentUser();
+                if (!user) { showToast('يجب تسجيل الدخول', true); return; }
+                const isLiked = el.classList.contains('liked'); const countSpan = el.querySelector('.like-count'); let current = parseInt(countSpan.innerText) || 0;
+                if (!isLiked) { el.classList.add('liked'); el.querySelector('i').className = 'fas fa-heart'; countSpan.innerText = current + 1; await supabase.from('comment_likes').insert({ user_id: user.id, comment_id: commentId }); await supabase.rpc('increment_comment_likes', { comment_id: commentId }); }
+                else { el.classList.remove('liked'); el.querySelector('i').className = 'far fa-heart'; countSpan.innerText = Math.max(0, current - 1); await supabase.from('comment_likes').delete().eq('user_id', user.id).eq('comment_id', commentId); await supabase.rpc('decrement_comment_likes', { comment_id: commentId }); }
+            };
+        });
+        document.querySelectorAll('.reply-comment').forEach(el => {
+            el.onclick = (e) => {
+                e.stopPropagation(); const commentId = el.dataset.commentId; const existing = document.querySelector(`.reply-input-area[data-comment="${commentId}"]`);
+                if (existing) { existing.remove(); return; }
+                const replyContainer = document.getElementById(`replies-${commentId}`); const inputDiv = document.createElement('div'); inputDiv.className = 'reply-input-area'; inputDiv.dataset.comment = commentId;
+                inputDiv.innerHTML = `<input type="text" class="reply-input" placeholder="اكتب رداً..."><button class="send-reply-btn">إرسال</button>`;
+                if (replyContainer) replyContainer.appendChild(inputDiv); else { const commentItem = document.getElementById(`comment-${commentId}`); const newReplyContainer = document.createElement('div'); newReplyContainer.className = 'reply-container'; newReplyContainer.id = `replies-${commentId}`; commentItem.appendChild(newReplyContainer); newReplyContainer.appendChild(inputDiv); }
+                const sendBtn = inputDiv.querySelector('.send-reply-btn'), replyInput = inputDiv.querySelector('.reply-input');
+                sendBtn.onclick = async () => { const user = getCurrentUser(); const text = replyInput.value.trim(); if (!text || !user) return; await supabase.from('comments').insert({ post_id: currentCommentPostId, user_id: user.id, text: text, parent_id: commentId }); await incrementCommentsCount(currentCommentPostId); inputDiv.remove(); loadComments(currentCommentPostId); showToast('تم إضافة الرد'); };
+                replyInput.focus();
+            };
+        });
+        document.querySelectorAll('.edit-comment').forEach(el => {
+            el.onclick = async (e) => {
+                e.stopPropagation(); const commentId = el.dataset.commentId; const textDiv = document.getElementById(`comment-text-${commentId}`); if (!textDiv) return; const currentText = textDiv.innerText; const input = document.createElement('input'); input.type = 'text'; input.className = 'edit-input'; input.value = currentText; textDiv.replaceWith(input); input.focus();
+                const saveEdit = async () => { const newText = input.value.trim(); if (newText && newText !== currentText) { await supabase.from('comments').update({ text: newText, edited: true }).eq('id', commentId); showToast('تم تعديل التعليق'); loadComments(currentCommentPostId); } else { input.replaceWith(textDiv); } };
+                input.addEventListener('blur', saveEdit); input.addEventListener('keypress', (ev) => { if (ev.key === 'Enter') input.blur(); });
+            };
+        });
+        document.querySelectorAll('.delete-comment').forEach(el => {
+            el.onclick = async (e) => { e.stopPropagation(); const commentId = el.dataset.commentId; if (confirm('هل أنت متأكد من حذف هذا التعليق؟')) { const { data: childComments } = await supabase.from('comments').select('id').eq('parent_id', commentId); if (childComments && childComments.length) await supabase.from('comments').delete().in('id', childComments.map(c => c.id)); await supabase.from('comments').delete().eq('id', commentId); await decrementCommentsCount(currentCommentPostId); showToast('تم حذف التعليق'); loadComments(currentCommentPostId); } };
+        });
+    }
+
+    document.getElementById('sendCommentBtn').addEventListener('click', async () => {
+        const user = getCurrentUser(); const input = document.getElementById('newCommentInput'); const text = input.value.trim();
+        if (!text || !currentCommentPostId || !user) return;
+        await supabase.from('comments').insert({ post_id: currentCommentPostId, user_id: user.id, text: text });
+        await incrementCommentsCount(currentCommentPostId); input.value = ''; loadComments(currentCommentPostId); showToast('تم إضافة التعليق');
+    });
+    document.getElementById('closeSheetBtn').addEventListener('click', () => document.getElementById('commentsSheet').classList.remove('open'));
+
+    // ===================== إيموجي وإرفاق =====================
+    const emojis = ['😀','😂','😍','😢','😡','👍','👎','❤️','🔥','🎉','😎','🤔','😴','🥳','😇','🤗','😤','😱','💔','✨','🌟','💡','📌','📎','📷','🎵','🎤','📞','📍','📋'];
+    function buildEmojiPicker() {
+        const picker = document.getElementById('emojiPicker'); picker.innerHTML = '';
+        emojis.forEach(emoji => { const span = document.createElement('span'); span.className = 'emoji-option'; span.textContent = emoji; span.addEventListener('click', () => { document.getElementById('newCommentInput').value += emoji; picker.classList.remove('active'); }); picker.appendChild(span); });
+    }
+    document.getElementById('emojiBtn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('emojiPicker').classList.toggle('active'); });
+    document.addEventListener('click', (e) => { if (!e.target.closest('#emojiPicker') && !e.target.closest('#emojiBtn')) document.getElementById('emojiPicker').classList.remove('active'); });
+    const attachSheet = document.getElementById('attachSheet');
+    document.getElementById('attachBtn').addEventListener('click', (e) => { e.stopPropagation(); attachSheet.classList.add('open'); });
+    document.getElementById('closeAttachBtn').addEventListener('click', () => attachSheet.classList.remove('open'));
+
+    // مشاركة متقدمة
+    window.openShareAdvanced = () => document.getElementById('shareAdvancedSheet').classList.add('open');
+    window.closeShareSheet = () => document.getElementById('shareAdvancedSheet').classList.remove('open');
+    document.getElementById('closeShareSheetBtn').addEventListener('click', window.closeShareSheet);
+    window.downloadPostImage = () => showToast('جاري التحميل...');
+    window.reportCurrentPost = () => showToast('تم الإبلاغ');
+
+    // ===================== بدء التشغيل =====================
+    async function init() {
+        buildEmojiPicker();
+        await checkSession();
+        await refreshFeed();
+
+        // تحميل القصص الحقيقية من قاعدة البيانات
+        const storiesRow = document.getElementById('storiesRow');
+        storiesRow.innerHTML = `
+            <div class="story-item story-add" onclick="showToast('📸 افتح الكاميرا لإضافة ستوري')">
+                <div class="story-ring"><span>+</span></div>
+                <div class="story-username">أضف ستوري</div>
+            </div>
+        `;
+        const { data: stories } = await supabase
+            .from('stories')
+            .select('*, users:user_id (username)')
+            .gt('expires_at', new Date().toISOString())
+            .order('created_at', { ascending: false });
+        if (stories && stories.length > 0) {
+            stories.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'story-item';
+                div.onclick = () => showToast(`👀 قصة ${s.users?.username || 'مستخدم'}`);
+                div.innerHTML = `<div class="story-ring"><img class="story-avatar" src="${s.image}" alt=""></div><div class="story-username">${escapeHtml(s.users?.username || 'مستخدم')}</div>`;
+                storiesRow.appendChild(div);
+            });
+        }
+        console.log('✅ Ramz-X جاهز بالكامل - القصص ديناميكية');
+    }
+    document.addEventListener('DOMContentLoaded', init);
+
+    // تسجيل Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('✅ Service Worker مسجل:', reg.scope))
+            .catch(err => console.warn('⚠️ فشل تسجيل Service Worker:', err));
+    }
+</script>
+</body>
+</html>
